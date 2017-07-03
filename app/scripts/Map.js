@@ -56,21 +56,20 @@ const Map = function(mapSize, blockSize){
 };
 
   function blockExists(block){
-    return self.blocks[block.y][block.x] != undefined ||
-           self.blocks[block.y][block.x] != null;
+    return self.blocks[block.position.y][block.position.x] != undefined ||
+           self.blocks[block.position.y][block.position.x] != null;
   };
 
   this.clearBlock = function(block){
-
     if(blockExists(block)){
-      self.blocks[block.y][block.x].type = BLOCK_TYPE.empty;
+      self.blocks[block.position.y][block.position.x].type = BLOCK_TYPE.empty;
     }
 
   };
 
-  this.updateBlock = function(block, type){
+  this.updateBlock = function(block){
     if(blockExists(block)){
-      self.blocks[block.y][block.x].type = type;
+      self.blocks[block.position.y][block.position.x].type = block.type;
     }
   };
 

@@ -1,9 +1,12 @@
-const Snake = function(initialSize, velocity){
+const Snake = function(blockSize, initialSize){
 
+  const SNAKE_BLOCK_SIZE = blockSize;
   var self = this;
 
   function init(){
-    self.velocity = velocity || 1;
+    self.direction = DIRECTION.right;
+    self.initialSize = initialSize || 4;
+    self.velocity = 1;
     self.body = initSnake();
   };
 
@@ -12,9 +15,9 @@ const Snake = function(initialSize, velocity){
       var tempX = 20;
       var tempY = 20;
 
-      for(var i = 0; i < initialSize; i++){
-        body.push(new POINT(tempX, tempY));
-        tempX--;
+      // posiciona o corpo
+      for(var i = 0; i < self.initialSize; i++){
+        body.push(new BLOCK(tempX--, tempY, BLOCK_TYPE.snakeBody));
       }
 
       return body;
@@ -31,10 +34,54 @@ const Snake = function(initialSize, velocity){
     self.body[0] = newHead;
   };
 
+  function getNewTailPosition(){
+      var tail = self.body[self.body.length - 1];
+      var head = self.body[0];
+      var x = tail.position.x;
+      var y = tail.position.y;
+      if(head.position.y == tail.position.y){
+        switch (self.direction) {
+          case DIRECTION.right:
+            x -= 1;
+            break;
+
+          case DIRECTION.left:
+            x += 1;
+            break;
+        }
+      }
+      else if(head.position.x == tail.position.x){
+        switch (self.direction) {
+          case DIRECTION.up:
+            y += 1;
+            break;
+
+          case DIRECTION.down:
+            y -= 1;
+            break;
+          }
+      }else{
+        if(tail.position.x - 1 != head.position.x){
+          x -= 1;
+        }
+        else if(tail.position.x + 1 != head.position.x){
+          x += 1;
+        }
+        else if(tail.position.y + 1 != head.position.y){
+          y += 1;
+        }
+        else if(tail.position.y + 1 != head.position.y){
+          y += 1;
+        }
+      }
+
+      return new POINT(x, y);
+  }
+
   this.selfCollided = function(){
     var head = self.body[0];
     for(var i = 1; i < self.getSize(); i++){
-      if(self.body[i].x == head.x && self.body[i].y == head.y){
+      if(self.body[i].x == head.position.x && self.body[i].y == head.position.y){
         return COLLISION_TYPE.self;
       }
     }
@@ -49,57 +96,39 @@ const Snake = function(initialSize, velocity){
   };
 
   // cresce a snake conforme ela come as comidas
-  this.increaseSize = function(direction){
-    var calda = self.body[self.body.length - 1];
-    var x = calda.x;
-    var y = calda.y;
-    switch (direction) {
-      case DIRECTION.up:
-        y += 1;
-        break;
+  this.increaseSize = function(){
 
-      case DIRECTION.down:
-        y -= 1;
-        break;
+    var pos = getNewTailPosition();
 
-      case DIRECTION.right:
-        x -= 1;
-        break;
-
-      case DIRECTION.left:
-        x += 1;
-        break;
-    }
-
-    // atualiza a snake
-    self.body.push(new POINT(x,  y));
+    self.body.push(new BLOCK(pos.x, pos.y, BLOCK_TYPE.snakeBody));
 
   };
 
-  this.move = function(direction){
-    var head = self.body[0];
-    var newHeadPosition = new POINT(head.x, head.y);
+  this.move = function(){
 
-    switch(direction){
+    var head = self.body[0];
+    var newHeadPosition = new BLOCK(head.position.x, head.position.y, BLOCK_TYPE.snakeBody);
+
+    switch(self.direction){
       case DIRECTION.up:
-        newHeadPosition.y = head.y - self.velocity;
+        newHeadPosition.position.y = head.position.y - self.velocity;
       break;
 
       case DIRECTION.down:
-        newHeadPosition.y = head.y + self.velocity;
+        newHeadPosition.position.y = head.position.y + self.velocity;
       break;
 
       case DIRECTION.left:
-        newHeadPosition.x = head.x - self.velocity;
+        newHeadPosition.position.x = head.position.x - self.velocity;
       break;
 
       case DIRECTION.right:
-        newHeadPosition.x = head.x + self.velocity;
+        newHeadPosition.position.x = head.position.x + self.velocity;
       break;
     }
 
-
     updateBody();
+
     updateHead(newHeadPosition);
 
   };

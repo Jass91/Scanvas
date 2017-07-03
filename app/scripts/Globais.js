@@ -1,14 +1,17 @@
+const BLOCK_SIZE = 4;
+
 // enums
 const COLLISION_TYPE = {
   map: 0,
   self: 1,
-  food: 2
+  food: 2,
+  none: 3
 };
 
 const BLOCK_TYPE = {
   empty: 0,
   snakeBody: 1,
-  snakeHead: 2,
+  snakeExtra: 2,
   food: 3,
   wall: 4
 };
@@ -28,7 +31,7 @@ const POINT = function(x, y){
 
 const BLOCK = function(px, py, type, size){
   this.type = type || BLOCK_TYPE.empty;
-  this.size = size;
+  this.size = size || BLOCK_SIZE;
   this.position = new POINT(px, py);
 };
 

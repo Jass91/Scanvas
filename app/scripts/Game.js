@@ -1,19 +1,15 @@
 const Game = function(canvas){
 
   const GRID_SIZE = 100;
-  const VELOCITY = 1;
-  const BLOCK_SIZE = 4;
-  const SNAKE_INITIAL_SIZE = 3;
 
   var self = this;
   var context = canvas.getContext("2d");
-  var direction = DIRECTION.right;
   var running = true;
   var gameOver = false;
   var infoMsg = "";
-  var map;
-  var snake;
-  var food;
+  var map = null;
+  var snake = null;
+  var food = null;
 
   function init(){
 
@@ -28,7 +24,7 @@ const Game = function(canvas){
     };
 
     map = new Map(mapSize, blockSize);
-    snake = new Snake(SNAKE_INITIAL_SIZE, VELOCITY);
+    snake = new Snake(blockSize, 1);
     food = getFood();
 
     registerEvents();
@@ -41,8 +37,13 @@ const Game = function(canvas){
 
   }
 
+  function getScore(){
+    return snake.getSize() - snake.initialSize;
+  }
+
   function getDirection(code){
 
+    var direction = snake.direction;
     if(direction == DIRECTION.down || direction == DIRECTION.up){
       switch(code){
         case DIRECTION.left:
@@ -89,7 +90,7 @@ const Game = function(canvas){
     else if(key == 'Space'){
       running = !running;
     }else if(running){
-      direction = getDirection(key);
+      snake.direction = getDirection(key);
     }
   }
 
@@ -103,17 +104,17 @@ const Game = function(canvas){
     var head = snake.getHead();
 
     // verifica colisao com a comida
-    if(food.x == head.x && food.y == head.y){
+    if(food.position.x == head.position.x && food.position.y == head.position.y){
       return COLLISION_TYPE.food;
     }
 
     // verifica colisao com o cenario
     if(
       // colidiu com os limites laterais do mapa
-      (head.x < boundaries.leftSide ||  head.x > boundaries.rightSide) ||
+      (head.position.x < boundaries.leftSide ||  head.position.x > boundaries.rightSide) ||
 
       // colidiu com os limites verticais do mapa
-      (head.y < boundaries.upSide ||  head.y > boundaries.bottomSide)
+      (head.position.y < boundaries.upSide ||  head.position.y > boundaries.bottomSide)
     ){
       return COLLISION_TYPE.map;
     }
@@ -124,7 +125,7 @@ const Game = function(canvas){
     }
 
     // se nao houve colisao
-    return null;
+    return COLLISION_TYPE.none;
 
   };
 
@@ -136,14 +137,10 @@ const Game = function(canvas){
 
   function updateSnakePosition(){
 
-    // posiciona a cabeça no mapa
-    var head = snake.body[0];
-    map.updateBlock(head, BLOCK_TYPE.snakeHead);
-
-    // posiciona o corpo no mapa
-    for(var i = 1; i < snake.getSize(); i++){
+    // posiciona a snake no mapa
+    for(var i = 0; i < snake.getSize(); i++){
       var block = snake.body[i];
-      map.updateBlock(block, BLOCK_TYPE.snakeBody);
+      map.updateBlock(block, block.type);
     }
   };
 
@@ -162,15 +159,15 @@ const Game = function(canvas){
     var y = randomY <= up ? up + 2 :
             randomY >= down ? down - 2 : randomY;
 
-    return new POINT(x, y);
+    return new BLOCK(x, y, BLOCK_TYPE.food);
   };
 
   function setFood(){
-    map.updateBlock(food, BLOCK_TYPE.food);
+    map.updateBlock(food);
   }
 
   function clearFood(){
-    map.updateBlock(food, BLOCK_TYPE.empty);
+    map.updateBlock(food);
   }
 
   function updateFoodPosition(){
@@ -183,7 +180,7 @@ const Game = function(canvas){
     clearSnake();
 
     // atualiza a posicao da snake
-    snake.move(direction);
+    snake.move();
 
     // checa colisoes
     var collision = getCollision();
@@ -193,12 +190,12 @@ const Game = function(canvas){
       case COLLISION_TYPE.self:
         gameOver = true;
         running = false;
-        infoMsg = "Voce Perdeu: " + snake.getSize();
+        infoMsg = "Voce perdeu, mas conseguiu crescer a snake em : " + getScore() + " blocos";
         return;
       case COLLISION_TYPE.food:
-        snake.increaseSize(direction);
         clearFood();
         updateFoodPosition();
+        snake.increaseSize();
     }
 
     // marca os blocos do mapa onde terá a snake
@@ -228,18 +225,18 @@ const Game = function(canvas){
              context.fillRect(block.position.x, block.position.y, block.size.width, block.size.height);
              //context.drawImage(snakeTexture, block.position.x, block.position.y, block.size.width, block.size.height);
            break;
-           case BLOCK_TYPE.snakeHead:
-             context.fillStyle = "black";
-             context.fillRect(block.position.x, block.position.y, block.size.width, block.size.height);
-           break;
            case BLOCK_TYPE.wall:
              context.fillStyle = "brown";
              context.fillRect(block.position.x, block.position.y, block.size.width, block.size.height);
            break;
            case BLOCK_TYPE.food:
-           context.fillStyle = "blue";
-           context.fillRect(block.position.x, block.position.y, block.size.width, block.size.height);
+             context.fillStyle = "blue";
+             context.fillRect(block.position.x, block.position.y, block.size.width, block.size.height);
            break;
+          //  case BLOCK_TYPE.snakeExtra:
+          //  debugger;
+          //    context.fillStyle = "black";
+          //    context.fillRect(block.position.x, block.position.y, block.size.width, block.size.height);
          }
        });
      });
